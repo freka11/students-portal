@@ -8,6 +8,7 @@ import {
   markAsRead,
   updateLastMessage,
 } from '@/lib/chatService'
+import { markConversationAsRead } from '@/lib/conversationService'
 import { useChatMessages } from './useChatMessages'
 import { subscribeToConversations, subscribeToTeacherConversations } from '@/lib/chatService'
 
@@ -15,14 +16,16 @@ import { subscribeToConversations, subscribeToTeacherConversations } from '@/lib
 interface UseChatOptions {
   userId: string
   userType: 'admin' | 'student'
+  userName: string
+  isSuperAdmin?: boolean
   enabled?: boolean
 }
 
 export const useChat = (options: UseChatOptions) => {
-  const { userId, userType } = options
+  const { userId, userType, userName } = options
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [hasLoaded, setHasLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -39,7 +42,8 @@ export const useChat = (options: UseChatOptions) => {
 useEffect(() => {
   if (!userId || options.enabled === false) return
 
-  setLoading(true)
+  // Reset load state when the user changes (avoid setState-in-effect lint)
+  setTimeout(() => setHasLoaded(false), 0)
 
   let unsubscribe
   if (userType === 'admin') {
@@ -48,9 +52,20 @@ useEffect(() => {
       userId,
       userType,
       (convs) => {
-        setConversations(convs)
-        setLoading(false)
-      }
+        // Preserve unread count for selected conversation to avoid flicker
+        setConversations(prevConvs => {
+          const selectedConv = prevConvs.find(c => c.id === selectedConversation?.id)
+          return convs.map(c => {
+            if (selectedConv && c.id === selectedConv.id) {
+              // Keep the local unread count (should be 0 after marking as read)
+              return { ...c, adminUnreadCount: selectedConv.adminUnreadCount }
+            }
+            return c
+          })
+        })
+        setHasLoaded(true)
+      },
+      { isSuperAdmin: options.isSuperAdmin === true }
     )
   } else {
     // For students, use the standard subscription
@@ -58,8 +73,18 @@ useEffect(() => {
       userId,
       userType,
       (convs) => {
-        setConversations(convs)
-        setLoading(false)
+        // Preserve unread count for selected conversation to avoid flicker
+        setConversations(prevConvs => {
+          const selectedConv = prevConvs.find(c => c.id === selectedConversation?.id)
+          return convs.map(c => {
+            if (selectedConv && c.id === selectedConv.id) {
+              // Keep the local unread count (should be 0 after marking as read)
+              return { ...c, studentUnreadCount: selectedConv.studentUnreadCount }
+            }
+            return c
+          })
+        })
+        setHasLoaded(true)
       }
     )
   }
@@ -67,14 +92,14 @@ useEffect(() => {
   return () => {
     if (unsubscribe) unsubscribe()
   }
-}, [userId, userType])
-
+}, [userId, userType, options.enabled])
 
 useEffect(() => {
   if (!selectedConversation) return
-
-  markAsRead(selectedConversation.id, userId, userType)
-}, [messages])
+  
+  // Also mark as read when messages are loaded to ensure unread count is reset
+  markConversationAsRead(selectedConversation.id, userType)
+}, [selectedConversation?.id, userType])
 
 
   // Sort conversations by most recent message (memoized)
@@ -114,11 +139,26 @@ useEffect(() => {
 
       if (conv) {
         setSelectedConversation(conv)
-        // Mark messages as read
+        // Mark conversation as read immediately to set unread count to 0
         try {
-          await markAsRead(conversationId, userId, userType)
+          await markConversationAsRead(conversationId, userType)
+          
+          // Immediately update local state to reflect unread count change
+          setConversations(prevConvs => {
+            const updated = prevConvs.map(c => 
+              c.id === conversationId 
+                ? { ...c, adminUnreadCount: 0 }
+                : c
+            )
+            return updated
+          })
+          
+          // Force a re-render by updating with a new array reference
+          setTimeout(() => {
+            setConversations(prevConvs => [...prevConvs])
+          }, 0)
         } catch (err) {
-          console.error('Error marking messages as read:', err)
+          console.error('Error marking conversation as read:', err)
         }
       }
     },
@@ -137,6 +177,7 @@ useEffect(() => {
           content,
           senderId: userId,
           senderType: userType,
+          senderName: userName,
         })
 
         // Update last message in conversation
@@ -144,7 +185,8 @@ useEffect(() => {
           selectedConversation.id,
           content,
           userId,
-          userType
+          userType,
+          selectedConversation.id  // Pass selected conversation ID to prevent unread increment
         )
 
         return messageId
@@ -165,7 +207,7 @@ useEffect(() => {
     conversations: filteredConversations,
     selectedConversation,
     messages,
-    loading: loading || messagesLoading,
+    loading: !hasLoaded || messagesLoading,
     error: error || messagesError,
     searchQuery,
     selectConversation,

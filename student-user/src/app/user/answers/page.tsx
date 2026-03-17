@@ -52,7 +52,7 @@ export default function AnswersPage() {
         console.log('All answers data:', answersData)
         
         // Ensure answersData is an array
-        const studentAnswers = Array.isArray(answersData) ? answersData : []
+        const studentAnswers: unknown[] = Array.isArray(answersData) ? (answersData as unknown[]) : []
         
         if (studentAnswers.length === 0) {
           console.log('No answers found in database')
@@ -82,17 +82,28 @@ export default function AnswersPage() {
         }
         
         // Transform and enrich answers data
+        const toAnswerRecord = (a: unknown): { questionId: string; answer: string; submittedAt: string } | null => {
+          if (!a || typeof a !== 'object') return null
+          const r = a as Record<string, unknown>
+          if (typeof r.questionId !== 'string') return null
+          if (typeof r.answer !== 'string') return null
+          if (typeof r.submittedAt !== 'string') return null
+          return { questionId: r.questionId, answer: r.answer, submittedAt: r.submittedAt }
+        }
+
         const userAnswers: UserAnswer[] = studentAnswers
-          .filter((answer: any) => !!answer?.questionId && validQuestionIds.has(answer.questionId))
-          .map((answer: any) => {
-          const questionText = questionTextById.get(answer.questionId)
-          return {
-            date: answer.submittedAt?.split('T')[0] || new Date().toISOString().split('T')[0],
-            question: questionText || '',
-            answer: answer.answer,
-            timestamp: answer.submittedAt
-          }
-        })
+          .map(toAnswerRecord)
+          .filter((a): a is { questionId: string; answer: string; submittedAt: string } => !!a)
+          .filter((answer) => validQuestionIds.has(answer.questionId))
+          .map((answer) => {
+            const questionText = questionTextById.get(answer.questionId)
+            return {
+              date: answer.submittedAt.split('T')[0] || new Date().toISOString().split('T')[0],
+              question: questionText || '',
+              answer: answer.answer,
+              timestamp: answer.submittedAt,
+            }
+          })
         
         console.log('Transformed user answers:', userAnswers)
         
@@ -117,7 +128,11 @@ export default function AnswersPage() {
     if (!ready) return
     if (!user) return
 
-    loadAnswers()
+    const timeout = setTimeout(() => {
+      loadAnswers()
+    }, 0)
+
+    return () => clearTimeout(timeout)
   }, [ready, user])
 
   const submitTestAnswer = async () => {
@@ -174,23 +189,27 @@ export default function AnswersPage() {
 
   useEffect(() => {
     // Filter answers based on search query
-    if (searchQuery.trim()) {
-      const filtered = answers.filter(
-        answer =>
-          answer.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          answer.answer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          answer.date.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      setFilteredAnswers(filtered)
-      setCurrentPage(1)
-      setDisplayedAnswers(filtered.slice(0, itemsPerPage))
-      setHasMore(filtered.length > itemsPerPage)
-    } else {
-      setFilteredAnswers(answers)
-      setCurrentPage(1)
-      setDisplayedAnswers(answers.slice(0, itemsPerPage))
-      setHasMore(answers.length > itemsPerPage)
-    }
+    const timeout = setTimeout(() => {
+      if (searchQuery.trim()) {
+        const filtered = answers.filter(
+          answer =>
+            answer.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            answer.answer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            answer.date.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        setFilteredAnswers(filtered)
+        setCurrentPage(1)
+        setDisplayedAnswers(filtered.slice(0, itemsPerPage))
+        setHasMore(filtered.length > itemsPerPage)
+      } else {
+        setFilteredAnswers(answers)
+        setCurrentPage(1)
+        setDisplayedAnswers(answers.slice(0, itemsPerPage))
+        setHasMore(answers.length > itemsPerPage)
+      }
+    }, 0)
+
+    return () => clearTimeout(timeout)
   }, [searchQuery, answers])
 
   const handleViewAnswer = (answer: UserAnswer) => {
@@ -326,7 +345,7 @@ export default function AnswersPage() {
             </p>
             {!searchQuery && (
               <Button onClick={() => window.location.href = '/user/question'} className="hover:cursor-pointer">
-                Answer Today's Question
+                {"Answer Today's Question"}
               </Button>
             )}
           </CardContent>

@@ -7,8 +7,8 @@ const requireRole_1 = require("../middleware/requireRole");
 const answers_controller_1 = require("../controllers/answers.controller");
 const router = (0, express_1.Router)();
 // Admin routes — /api/answers
-router.get('/', auth_middleware_1.authMiddleware, (0, requireRole_1.requireRole)(['admin', 'super_admin']), answers_controller_1.getAnswersAdmin);
-router.delete('/', auth_middleware_1.authMiddleware, (0, requireRole_1.requireRole)(['admin', 'super_admin']), answers_controller_1.deleteAnswerAdmin);
+router.get('/', auth_middleware_1.authMiddleware, (0, requireRole_1.requireRole)(['admin', 'super_admin', 'teacher']), answers_controller_1.getAnswersAdmin);
+router.delete('/', auth_middleware_1.authMiddleware, (0, requireRole_1.requireRole)(['admin', 'super_admin', 'teacher']), answers_controller_1.deleteAnswerAdmin);
 // Student posting answer
 router.post('/', auth_middleware_1.authMiddleware, answers_controller_1.submitAnswer);
 // Student routes — /api/student/answers (mounted separately in server.ts)

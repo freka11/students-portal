@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Lightbulb,
@@ -13,43 +13,74 @@ import {
   User,
   LogOut,
   Crown,
-} from 'lucide-react'
-import { Button } from '@/components/admin/Button'
-import { useAdminUser } from '@/hooks/useAdminUser'
+} from "lucide-react";
+import { Button } from "@/components/admin/Button";
+import { useAdminUser } from "@/hooks/useAdminUser";
 
 const navigation = [
-  { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { name: 'Thought', href: '/admin/thought', icon: Lightbulb },
-  { name: 'Question', href: '/admin/question', icon: HelpCircle },
-  { name: 'Chat', href: '/admin/chat', icon: MessageSquare },
-]
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "Thought", href: "/admin/thought", icon: Lightbulb },
+  { name: "Question", href: "/admin/question", icon: HelpCircle },
+  { name: "Chat", href: "/admin/chat", icon: MessageSquare },
+];
 export function Sidebar() {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [showLogoutModal, setShowLogoutModal] = useState(false)
-  const { admin, ready } = useAdminUser()
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const { admin, ready } = useAdminUser();
 
   useEffect(() => {
-    if (!ready) return
+    if (!ready) return;
     if (!admin) {
-      router.replace('/admin/login')
+      router.replace("/admin/login");
     }
-  }, [ready, admin, router])
+  }, [ready, admin, router]);
 
   const logout = () => {
-    localStorage.removeItem('adminUser')
-    router.push('/admin/login')
+    localStorage.removeItem("adminUser");
+    router.push("/admin/login");
+  };
+
+  // Don't return null to avoid hydration issues - handle loading state internally
+  if (!admin || !ready) {
+    return (
+      <div>
+        {/* Mobile Menu Button - same structure as normal state */}
+        <button
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200"
+          disabled
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        {/* Sidebar - same structure as normal state */}
+        <aside className="fixed top-0 left-0 z-50 h-full w-64 bg-white shadow-lg lg:static lg:translate-x-0 -translate-x-full">
+          <div className="flex items-center justify-between px-4 py-3 border-b">
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5 text-gray-500" />
+              <div className="flex flex-col">
+                <span className="text-lg text-black">Loading...</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    );
   }
 
   return (
-    <>
+    <div>
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200 active:scale-100"
       >
-        {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {isMobileMenuOpen ? (
+          <X className="h-5 w-5" />
+        ) : (
+          <Menu className="h-5 w-5" />
+        )}
       </button>
 
       {/* Overlay */}
@@ -66,7 +97,7 @@ export function Sidebar() {
           fixed top-0 left-0 z-50 h-full w-64 bg-white shadow-lg
           transition-transform duration-300 ease-in-out
           lg:static lg:translate-x-0
-          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
         {/* Admin Info */}
@@ -75,13 +106,13 @@ export function Sidebar() {
             <User className="h-5 w-5 text-gray-500" />
             <div className="flex flex-col">
               <span className="text-lg text-black">{admin?.name}</span>
-              {admin?.role === 'super_admin' && (
+              {admin?.role === "super_admin" && (
                 <span className="mt-1 inline-flex w-fit items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
                   <Crown className="h-3.5 w-3.5" />
                   Super Admin
                 </span>
               )}
-              {admin?.role === 'teacher' && (
+              {admin?.role === "teacher" && (
                 <span className="mt-1 inline-flex w-fit items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                   Teacher
                 </span>
@@ -90,10 +121,10 @@ export function Sidebar() {
           </div>
 
           <Button
-            onClick={()=>setShowLogoutModal(true)}
+            onClick={() => setShowLogoutModal(true)}
             className="cursor-pointer hover:scale-105 transition-all duration-200 bg-white hover:bg-red-500 hover:text-white text-grey-400"
           >
-            <LogOut className='w-5 h-5' />
+            <LogOut className="w-5 h-5" />
           </Button>
         </div>
 
@@ -103,11 +134,7 @@ export function Sidebar() {
             <h1 className="text-xl lg:text-2xl font-bold text-black">
               Admin Portal
             </h1>
-            <p className="text-sm text-black mt-1">
-              Management Dashboard
-              
-   
-            </p>
+            <p className="text-sm text-black mt-1">Management Dashboard</p>
           </div>
 
           {/* Mobile Menu Title */}
@@ -125,7 +152,7 @@ export function Sidebar() {
           <nav className="hidden lg:block lg:mt-6">
             <div className="px-3">
               {navigation.map((item) => {
-                const isActive = pathname === item.href
+                const isActive = pathname === item.href;
                 return (
                   <Link
                     key={item.name}
@@ -136,15 +163,15 @@ export function Sidebar() {
                       hover:scale-105 active:scale-100
                       ${
                         isActive
-                          ? 'bg-blue-50 text-black'
-                          : 'text-black hover:bg-gray-50'
+                          ? "bg-blue-50 text-black"
+                          : "text-black hover:bg-gray-50"
                       }
                     `}
                   >
                     <item.icon className="mr-3 h-5 w-5" />
                     {item.name}
                   </Link>
-                )
+                );
               })}
             </div>
           </nav>
@@ -153,7 +180,7 @@ export function Sidebar() {
           <nav className="lg:hidden">
             <div className="space-y-1">
               {navigation.map((item) => {
-                const isActive = pathname === item.href
+                const isActive = pathname === item.href;
                 return (
                   <Link
                     key={item.name}
@@ -165,14 +192,14 @@ export function Sidebar() {
                       hover:scale-105 active:scale-100
                       ${
                         isActive
-                          ? 'bg-blue-50 text-black'
-                          : 'text-black hover:bg-gray-50'
+                          ? "bg-blue-50 text-black"
+                          : "text-black hover:bg-gray-50"
                       }
                     `}
                   >
                     {item.name}
                   </Link>
-                )
+                );
               })}
             </div>
           </nav>
@@ -180,40 +207,41 @@ export function Sidebar() {
       </aside>
 
       {showLogoutModal && (
-  <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40"
-      onClick={() => setShowLogoutModal(false)} >
-    <div className="bg-white rounded-xl shadow-xl w-[90%] max-w-sm p-6"
-    onClick={(e) => e.stopPropagation()}>
-      <h2 className="text-lg font-semibold text-black">
-        Confirm Logout
-      </h2>
-
-      <p className="text-sm text-gray-600 mt-2">
-        Are you sure you want to logout?
-      </p>
-
-      <div className="flex justify-end gap-3 mt-6">
-        <button
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40"
           onClick={() => setShowLogoutModal(false)}
-          className="px-4 py-2 rounded-lg border text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
         >
-          No
-        </button>
+          <div
+            className="bg-white rounded-xl shadow-xl w-[90%] max-w-sm p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold text-black">Confirm Logout</h2>
 
-        <button
-          onClick={() => {
-            setShowLogoutModal(false)
-            logout()
-          }}
-          className="px-4 py-2 rounded-lg text-sm text-white bg-red-500 hover:bg-red-600 cursor-pointer"
-        >
-          Yes
-        </button>
-      </div>
+            <p className="text-sm text-gray-600 mt-2">
+              Are you sure you want to logout?
+            </p>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 rounded-lg border text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+              >
+                No
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowLogoutModal(false);
+                  logout();
+                }}
+                className="px-4 py-2 rounded-lg text-sm text-white bg-red-500 hover:bg-red-600 cursor-pointer"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-)}
-
-    </>
-  )
+  );
 }

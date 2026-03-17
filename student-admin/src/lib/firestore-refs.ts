@@ -60,3 +60,13 @@ export const generateConversationId = (
   const [id1, id2] = [userId1, userId2].sort()
   return `${id1}_${id2}`
 }
+
+// Helper function to generate admin-specific conversation ID
+// This ensures each admin has a separate conversation with the same student
+export const generateAdminConversationId = (
+  adminId: string,
+  studentId: string
+): string => {
+  // Don't sort - maintain admin_student order to keep conversations separate per admin
+  return `${adminId}_${studentId}`
+}

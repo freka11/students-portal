@@ -37,8 +37,8 @@ export default function ChatPage() {
 
   // Always call hooks in a stable order (do not conditionally call hooks)
   const isTeacher = admin?.role === 'teacher'
-  const adminChatHook = useChat({ userId: admin?.id || '', userType: 'admin', enabled: !isTeacher })
-  const teacherChatHook = useTeacherChat({ userId: admin?.id || '', enabled: isTeacher })
+  const adminChatHook = useChat({ userId: admin?.id || '', userType: 'admin', userName: admin?.name || 'Unknown', isSuperAdmin: admin?.role === 'super_admin', enabled: !isTeacher })
+  const teacherChatHook = useTeacherChat({ userId: admin?.id || '', userName: admin?.name || 'Unknown', enabled: isTeacher })
 
   const chatHook = isTeacher ? teacherChatHook : adminChatHook
 
@@ -88,16 +88,6 @@ export default function ChatPage() {
 
     loadTeachers()
   }, [admin?.id, admin?.role])
-
-  // Debug logging
-  useEffect(() => {
-    console.log('🔍 Admin Chat Debug - Admin User:', admin)
-    console.log('🔍 Admin Chat Debug - Available Users:', availableUsers)
-    console.log('🔍 Admin Chat Debug - Teachers:', teachers)
-    console.log('🔍 Admin Chat Debug - Users Loading:', usersLoading)
-    console.log('🔍 Admin Chat Debug - Conversations:', conversations)
-    console.log('🔍 Admin Chat Debug - Selected Conversation:', selectedConversation)
-  }, [admin, availableUsers, teachers, usersLoading, conversations, selectedConversation])
 
   useEffect(() => {
     if (error) {
@@ -187,9 +177,9 @@ export default function ChatPage() {
 
   const handleAssignmentChange = async (conversationId: string, teacherId: string | null) => {
     try {
-      // Ensure auth is ready and token is retrieved
-      await auth.authStateReady()
-      const token = await auth.currentUser?.getIdToken()
+      // Get current user and token
+      const currentUser = auth.currentUser
+      const token = await currentUser?.getIdToken()
 
       if (!token) {
         throw new Error('Authentication required to assign conversations')
@@ -313,7 +303,7 @@ export default function ChatPage() {
                     
        
 
-              <div className="flex-1 min-h-0 overflow-y-auto">
+              <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar">
                 {usersLoading && loading ? (
                   <div className="text-center py-8">
                     <p className="text-gray-500">Loading chats...</p>
@@ -358,7 +348,7 @@ export default function ChatPage() {
                       : conversations
 
                     return (
-                      <div className="space-y-1">
+                      <div className="space-y-1 hide-scrollbar overflow-y-auto h-full">
                         {filteredByDate.map((conversation) => (
                           <div
                             key={conversation.id}
@@ -398,37 +388,38 @@ export default function ChatPage() {
                                   )}
                                 </div>
 
-                                <p className="text-xs text-gray-500 mt-0.5">
-                                  {conversation.lastMessageTime.toLocaleDateString()}
-                                </p>
-                                {(() => {
-                                  const studentUser = availableUsers.find(
-                                    (u) => u.id === conversation.studentId
-                                  )
-                                  return studentUser?.email ? (
-                                    <p className="text-xs text-gray-500 truncate mt-0.5">
-                                      {studentUser.email}
-                                    </p>
-                                  ) : null
-                                })()}
-                                <p className="text-sm text-gray-600 truncate mt-1">
-                                  {conversation.lastMessage || 'No messages yet'}
-                                </p>
-
-                                {/* Show assignment info for teachers */}
-                                {admin?.role === 'teacher' && conversation.assignedTeacherName && (
-                                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                                    <span>Assigned to you</span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between">
+                                    <p className="font-medium text-black truncate">{conversation.studentName}</p>
+                                    <div className="text-right ml-2 shrink-0">
+                                      <div className="text-xs text-gray-500">
+                                        {conversation.lastMessageTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                      </div>
+                                      <div className="text-xs text-gray-400">
+                                        {conversation.lastMessageTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                      </div>
+                                    </div>
                                   </div>
-                                )}
-                              </div>
-                              {conversation.adminUnreadCount > 0 && (
-                                <div className="bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shrink-0">
+
+                                  <p className="text-sm text-gray-600 truncate mt-1">
+                                    {conversation.lastMessage || 'No messages yet'}
+                                  </p>
+
+                                  {/* Show assignment info for teachers */}
+                                  {admin?.role === 'teacher' && conversation.assignedTeacherName && (
+                                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                      <span>Assigned to you</span>
+                                    </div>
+                                  )}
+                                </div>
+                              {conversation.adminUnreadCount > 0 && selectedConversation?.id !== conversation.id && (
+                                <div className="bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
                                   {conversation.adminUnreadCount}
                                 </div>
                               )}
                             </div>
                           </div>
+                        </div>
                         ))}
 
                         {/* Only show "start new conversation" for non-teachers */}
@@ -439,7 +430,7 @@ export default function ChatPage() {
                             className="p-3 rounded-xl cursor-pointer transition-colors border border-transparent hover:bg-gray-50"
                           >
                             <div className="flex items-start gap-3">
-                              <div className="relative flex-shrink-0">
+                              <div className="relative shrink-0">
                                 <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
                                   {user.name.charAt(0).toUpperCase()}
                                 </div>
@@ -461,7 +452,7 @@ export default function ChatPage() {
         </div>
 
         {/* Chat Conversation */}
-        <div className={`flex-1 min-h-0 ${selectedConversation ? '' : 'hidden lg:block'}`}>
+        <div className={`flex-1 min-h-0  ${selectedConversation ? '' : 'hidden lg:block'}`}>
           <Card className="h-full">
             <CardContent className="p-0 h-full flex flex-col min-h-0">
               {selectedConversation ? (

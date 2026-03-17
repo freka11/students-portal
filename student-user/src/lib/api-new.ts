@@ -1,6 +1,7 @@
 /**
  * API client for backend. All student API calls go through this.
  * Set NEXT_PUBLIC_API_URL to point to backend (default: http://localhost:5000)
+ * Production: https://your-backend.onrender.com
  */
 import { getStudentIdToken } from './auth'
 

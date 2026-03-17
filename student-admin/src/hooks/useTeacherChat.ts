@@ -12,14 +12,15 @@ import { subscribeToTeacherConversations } from '@/lib/chatService'
 
 interface UseTeacherChatOptions {
   userId: string
+  userName: string
   enabled?: boolean
 }
 
 export const useTeacherChat = (options: UseTeacherChatOptions) => {
-  const { userId } = options
+  const { userId, userName } = options
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [hasLoaded, setHasLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -36,26 +37,28 @@ export const useTeacherChat = (options: UseTeacherChatOptions) => {
   useEffect(() => {
     if (!userId || options.enabled === false) return
 
-    setLoading(true)
+    // Reset load state when the user changes (avoids setState-in-effect lint)
+    setTimeout(() => setHasLoaded(false), 0)
 
     const unsubscribe = subscribeToTeacherConversations(
       userId,
       (convs) => {
         setConversations(convs)
-        setLoading(false)
+        setHasLoaded(true)
       }
     )
 
     return () => {
       if (unsubscribe) unsubscribe()
     }
-  }, [userId])
+  }, [userId, options.enabled])
 
   useEffect(() => {
-    if (!selectedConversation) return
+    const conversationId = selectedConversation?.id
+    if (!conversationId) return
 
-    markAsRead(selectedConversation.id, userId, 'teacher')
-  }, [messages])
+    markAsRead(conversationId, userId, 'teacher')
+  }, [selectedConversation?.id, userId])
 
   // Sort conversations by most recent message (memoized)
   const sortedConversations = useMemo(
@@ -117,6 +120,7 @@ export const useTeacherChat = (options: UseTeacherChatOptions) => {
           content,
           senderId: userId,
           senderType: 'teacher',
+          senderName: userName,
         })
 
         // Update last message in conversation
@@ -145,7 +149,7 @@ export const useTeacherChat = (options: UseTeacherChatOptions) => {
     conversations: filteredConversations,
     selectedConversation,
     messages,
-    loading: loading || messagesLoading,
+    loading: !hasLoaded || messagesLoading,
     error: error || messagesError,
     searchQuery,
     selectConversation,

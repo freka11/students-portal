@@ -2,7 +2,7 @@
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db } from './firebase-client'
 import { Conversation, ConversationMetadata } from '@/types/chat'
-import { generateConversationId } from './firestore-refs'
+import { generateAdminConversationId } from './firestore-refs'
 
 // Get or create a conversation between two users
 export const getOrCreateConversation = async (
@@ -18,7 +18,18 @@ export const getOrCreateConversation = async (
   publicId2?: string
 ): Promise<Conversation> => {
   try {
-    const conversationId = generateConversationId(userId1, userId2)
+    // Use admin-specific conversation ID to ensure each admin has separate conversations with students
+    let conversationId: string
+    if (type1 === 'admin' && type2 === 'student') {
+      conversationId = generateAdminConversationId(userId1, userId2)
+    } else if (type1 === 'student' && type2 === 'admin') {
+      conversationId = generateAdminConversationId(userId2, userId1)
+    } else {
+      // Fallback to original function for admin-admin or student-student conversations
+      const { generateConversationId } = await import('./firestore-refs')
+      conversationId = generateConversationId(userId1, userId2)
+    }
+    
     const conversationRef = doc(db, 'conversations', conversationId)
 
     // Try to get existing conversation
@@ -166,6 +177,31 @@ export const updateConversationLastMessage = async (
     })
   } catch (error) {
     console.error('Error updating conversation last message:', error)
+    throw error
+  }
+}
+
+
+
+
+export const markConversationAsRead = async (
+  conversationId: string,
+  userType: 'admin' | 'student'
+): Promise<void> => {
+  try {
+    const conversationRef = doc(db, 'conversations', conversationId)
+
+    const field =
+      userType === 'admin'
+        ? 'adminUnreadCount'
+        : 'studentUnreadCount'
+
+    await updateDoc(conversationRef, {
+      [field]: 0,
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error('Error marking conversation as read:', error)
     throw error
   }
 }

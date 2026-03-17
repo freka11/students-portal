@@ -4,10 +4,17 @@ import { useEffect, useState } from 'react'
 import { Button } from './Button'
 import { UserRoundCheck, UserRoundPen } from 'lucide-react'
 import { Modal } from './Modal'
+import type { Conversation } from '@/types/chat'
+
+type Teacher = {
+  id: string
+  name: string
+  email: string
+}
 
 interface ConversationAssignmentProps {
-  conversation: any
-  availableTeachers: any[]
+  conversation: Conversation
+  availableTeachers: Teacher[]
   currentUserId: string
   currentUserRole: string
   onAssignmentChange: (conversationId: string, teacherId: string | null) => Promise<void>

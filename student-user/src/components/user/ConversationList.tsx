@@ -35,7 +35,7 @@ export const ConversationList = ({
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto hide-scrollbar">
         {loading ? (
           <div className="text-center py-8">
             <p className="text-gray-500">Loading conversations...</p>
@@ -69,9 +69,14 @@ export const ConversationList = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p className="font-medium text-black truncate">{conversation.adminName}</p>
-                      <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
-                        {formatTime(conversation.lastMessageTime)}
-                      </span>
+                      <div className="text-right ml-2 flex-shrink-0">
+                        <div className="text-xs text-gray-500">
+                          {formatTime(conversation.lastMessageTime)}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {formatDate(conversation.lastMessageTime)}
+                        </div>
+                      </div>
                     </div>
                     {!!getSecondaryText?.(conversation) && (
                       <p className="text-xs text-gray-500 truncate mt-0.5">
@@ -82,8 +87,8 @@ export const ConversationList = ({
                       {conversation.lastMessage || 'No messages yet'}
                     </p>
                   </div>
-                  {conversation.studentUnreadCount > 0 && (
-                    <div className="bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0">
+                  {conversation.studentUnreadCount > 0 && selectedId !== conversation.id && (
+                    <div className="bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold flex-shrink-0">
                       {conversation.studentUnreadCount}
                     </div>
                   )}
@@ -97,18 +102,18 @@ export const ConversationList = ({
   )
 }
 
-// Helper function to format time
 const formatTime = (date: Date): string => {
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
+const formatDate = (date: Date): string => {
   const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-
-  if (diffMins < 1) return 'now'
-  if (diffMins < 60) return `${diffMins}m`
-  if (diffHours < 24) return `${diffHours}h`
-  if (diffDays < 7) return `${diffDays}d`
-
-  return date.toLocaleDateString()
+  if (date.getFullYear() === now.getFullYear()) {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }

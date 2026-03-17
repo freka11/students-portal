@@ -9,3 +9,8 @@ export const config = {
 export const devConfig = {
   API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
 }
+
+// Production configuration
+export const prodConfig = {
+  API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'https://your-backend.onrender.com',
+}

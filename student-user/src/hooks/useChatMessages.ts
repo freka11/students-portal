@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { Message } from '@/types/chat'
 import { getMessages } from '@/lib/chatService'
 import { useChatListener } from './useChatListener'
+import { Timestamp } from 'firebase/firestore'
 
 interface UseChatMessagesOptions {
   conversationId: string | null
@@ -74,11 +75,12 @@ export const useChatMessages = (options: UseChatMessagesOptions) => {
     try {
       setLoading(true)
       const oldestMessage = messages[0]
-      const moreMessages = await getMessages(
-        conversationId,
-        pageLimit,
-        oldestMessage.timestamp as any
-      )
+      const cursor =
+        oldestMessage.timestamp instanceof Date
+          ? Timestamp.fromDate(oldestMessage.timestamp)
+          : undefined
+
+      const moreMessages = await getMessages(conversationId, pageLimit, cursor)
 
       if (moreMessages.length < pageLimit) {
         setHasMore(false)

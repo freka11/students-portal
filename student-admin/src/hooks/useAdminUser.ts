@@ -15,11 +15,40 @@ export interface AdminUser {
 }
 
 export function useAdminUser() {
-  const [admin, setAdmin] = useState<AdminUser | null>(null)
-  const [ready, setReady] = useState(false)
+  const [admin, setAdmin] = useState<AdminUser | null>(() => {
+    try {
+      const stored = localStorage.getItem('adminUser')
+      if (!stored) return null
+      const parsed = JSON.parse(stored) as Record<string, unknown>
+      if (typeof parsed.id !== 'string' || typeof parsed.name !== 'string') return null
+      return {
+        id: parsed.id,
+        name: parsed.name,
+        email: typeof parsed.email === 'string' ? parsed.email : undefined,
+        username: typeof parsed.username === 'string' ? parsed.username : undefined,
+        role:
+          parsed.role === 'admin' || parsed.role === 'teacher' || parsed.role === 'super_admin'
+            ? parsed.role
+            : undefined,
+        publicId: typeof parsed.publicId === 'string' ? parsed.publicId : undefined,
+        permissions: Array.isArray(parsed.permissions)
+          ? parsed.permissions.filter((p): p is string => typeof p === 'string')
+          : undefined,
+      }
+    } catch {
+      return null
+    }
+  })
+
+  const [ready, setReady] = useState(() => {
+    try {
+      return !!localStorage.getItem('adminUser')
+    } catch {
+      return false
+    }
+  })
 
   useEffect(() => {
-    // Check local storage first
     try {
       const stored = localStorage.getItem('adminUser')
       if (stored) {
@@ -55,13 +84,12 @@ export function useAdminUser() {
         })
 
         return () => unsubscribe()
-      } else {
-        setAdmin(null)
-        setReady(true)
       }
-    } catch {
-      setAdmin(null)
+
+      // No stored user; we are ready (will render login gate downstream).
       setReady(true)
+    } catch {
+      setTimeout(() => setReady(true), 0)
     }
   }, [])
 

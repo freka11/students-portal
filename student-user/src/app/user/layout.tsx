@@ -27,8 +27,19 @@ export default function UserLayout({
 
   if (!ready || (!user && !isAuthPage)) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="text-gray-500 animate-pulse">Loading...</div>
+      <div className="flex h-screen bg-gray-50">
+        {/* Sidebar */}
+        <div
+          className={`relative transition-all duration-300 ease-in-out        
+        overflow-hidden`}
+        >
+          {!isLoginPage && !isSignupPage && <Sidebar/>}
+        </div>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto flex items-center justify-center">
+          <div className="text-gray-500 animate-pulse">Loading...</div>
+        </main>
       </div>
     )
   }

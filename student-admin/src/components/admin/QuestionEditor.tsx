@@ -125,7 +125,7 @@ export default function QuestionEditor({ onQuestionSaved }: QuestionEditorProps)
         // Check if question exists (has an ID that's not a temporary one)
         const isExistingQuestion = existingQuestions.some(eq => eq.id === question.id && !question.id.startsWith('temp-'))
 
-        let requestData: any = {
+        const requestData: Record<string, unknown> = {
           text: question.question,
           status: targetStatus
         }

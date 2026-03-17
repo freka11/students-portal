@@ -1,0 +1,28 @@
+services:
+  # Backend API Service
+  - type: web
+    name: student-portal-backend
+    env: node
+    plan: free
+    buildCommand: "npm install && npm run build"
+    startCommand: "npm start"
+    healthCheckPath: /health
+    
+    # Environment variables (set these in Render dashboard)
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000  # Render's default port
+    
+    # Auto-deploy configuration
+    repo: https://github.com/your-username/student-portal.git
+    rootDir: backend
+    branch: main
+    
+    # Health check configuration
+    healthCheck:
+      path: /health
+      checkInterval: 30
+      timeout: 10
+      retries: 3

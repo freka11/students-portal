@@ -8,19 +8,21 @@ import {
   markAsRead,
   updateLastMessage,
 } from '@/lib/chatService'
+import { markConversationAsRead } from '@/lib/conversationService'
 import { useChatMessages } from './useChatMessages'
 import { subscribeToConversations } from '@/lib/chatService'
 
 interface UseChatOptions {
   userId: string
   userType: 'admin' | 'student'
+  userName: string
 }
 
 export const useChat = (options: UseChatOptions) => {
-  const { userId, userType } = options
+  const { userId, userType, userName } = options
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [hasLoaded, setHasLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -38,14 +40,25 @@ export const useChat = (options: UseChatOptions) => {
 useEffect(() => {
   if (!userId) return
 
-  setLoading(true)
+  // Reset load state when the user changes (avoid setState-in-effect lint)
+  setTimeout(() => setHasLoaded(false), 0)
 
   const unsubscribe = subscribeToConversations(
     userId,
     userType,
     (convs) => {
-      setConversations(convs)
-      setLoading(false)
+      // Preserve unread count for selected conversation to avoid flicker
+      setConversations(prevConvs => {
+        const selectedConv = prevConvs.find(c => c.id === selectedConversation?.id)
+        return convs.map(c => {
+          if (selectedConv && c.id === selectedConv.id) {
+            // Keep the local unread count (should be 0 after marking as read)
+            return { ...c, studentUnreadCount: selectedConv.studentUnreadCount }
+          }
+          return c
+        })
+      })
+      setHasLoaded(true)
     }
   )
 
@@ -88,16 +101,39 @@ useEffect(() => {
 
       if (conv) {
         setSelectedConversation(conv)
-        // Mark messages as read
+        // Mark conversation as read immediately to set unread count to 0
         try {
-          await markAsRead(conversationId, userId, userType)
+          await markConversationAsRead(conversationId, userType)
+          
+          // Immediately update local state to reflect unread count change
+          setConversations(prevConvs => {
+            const updated = prevConvs.map(c => 
+              c.id === conversationId 
+                ? { ...c, studentUnreadCount: 0 }
+                : c
+            )
+            return updated
+          })
+          
+          // Force a re-render by updating with a new array reference
+          setTimeout(() => {
+            setConversations(prevConvs => [...prevConvs])
+          }, 0)
         } catch (err) {
-          console.error('Error marking messages as read:', err)
+          console.error('Error marking conversation as read:', err)
         }
       }
     },
     [conversations, userId, userType]
   )
+
+  // Also mark as read when messages are loaded for the selected conversation
+  useEffect(() => {
+  if (!selectedConversation) return
+  
+  // Also mark as read when messages are loaded to ensure unread count is reset
+  markConversationAsRead(selectedConversation.id, userType)
+}, [selectedConversation?.id, userType])
 
   const sendChatMessage = useCallback(
     async (content: string) => {
@@ -111,6 +147,7 @@ useEffect(() => {
           content,
           senderId: userId,
           senderType: userType,
+          senderName: userName,
         })
 
         // Update last message in conversation
@@ -118,7 +155,8 @@ useEffect(() => {
           selectedConversation.id,
           content,
           userId,
-          userType
+          userType,
+          selectedConversation.id  // Pass selected conversation ID to prevent unread increment
         )
 
         return messageId
@@ -139,7 +177,7 @@ useEffect(() => {
     conversations: filteredConversations,
     selectedConversation,
     messages,
-    loading: loading || messagesLoading,
+    loading: !hasLoaded || messagesLoading,
     error: error || messagesError,
     searchQuery,
     selectConversation,

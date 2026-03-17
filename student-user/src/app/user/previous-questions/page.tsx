@@ -66,24 +66,43 @@ export default function PreviousQuestionsPage() {
         }
         
         // Group questions by date for history view
-        const groupedByDate = questionsData.reduce((acc: any, question: any) => {
-          const date = question.publishDate || new Date().toISOString().split('T')[0]
-          if (!acc[date]) {
-            acc[date] = {
-              id: date,
-              date: date,
-              questions: [],
-              adminName: question.createdBy?.name || 'Admin',
-              adminId: question.createdBy?.uid || 'admin-123'
+        const groupedByDate = (Array.isArray(questionsData) ? questionsData : []).reduce(
+          (acc: Record<string, QuestionHistoryItem>, qRaw: unknown) => {
+            if (!qRaw || typeof qRaw !== 'object') return acc
+            const q = qRaw as Record<string, unknown>
+
+            const date =
+              typeof q.publishDate === 'string'
+                ? q.publishDate
+                : new Date().toISOString().split('T')[0]
+
+            if (!acc[date]) {
+              const createdBy = q.createdBy && typeof q.createdBy === 'object' ? (q.createdBy as Record<string, unknown>) : null
+              acc[date] = {
+                id: date,
+                date,
+                questions: [],
+                adminName: typeof createdBy?.name === 'string' ? createdBy.name : 'Admin',
+                adminId: typeof createdBy?.uid === 'string' ? createdBy.uid : 'admin-123',
+              }
             }
-          }
-          acc[date].questions.push({
-            id: question.id,
-            question: question.text, // Map 'text' to 'question'
-            status: question.status
-          })
-          return acc
-        }, {})
+
+            const id = typeof q.id === 'string' ? q.id : ''
+            const text = typeof q.text === 'string' ? q.text : ''
+            const status = q.status === 'published' || q.status === 'draft' ? q.status : 'draft'
+
+            if (id) {
+              acc[date].questions.push({
+                id,
+                question: text,
+                status,
+              })
+            }
+
+            return acc
+          },
+          {}
+        )
         
         const historyArray = Object.values(groupedByDate) as QuestionHistoryItem[]
         // Sort by date (newest first)

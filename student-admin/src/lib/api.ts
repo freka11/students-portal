@@ -1,7 +1,7 @@
 // API configuration and utilities
 import { config } from './config'
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
   message?: string
@@ -70,15 +70,22 @@ class ApiClient {
         ...options,
       })
 
-      const data = await response.json()
+      const json = (await response.json()) as unknown
+      const record: Record<string, unknown> | null =
+        json && typeof json === 'object' ? (json as Record<string, unknown>) : null
 
       if (!response.ok) {
-        throw new Error(data.error || `HTTP error! status: ${response.status}`)
+        const errFromBody = record?.error
+        const message =
+          typeof errFromBody === 'string'
+            ? errFromBody
+            : `HTTP error! status: ${response.status}`
+        throw new Error(message)
       }
 
       return {
         success: true,
-        data,
+        data: json as T,
       }
     } catch (error) {
       return {
@@ -92,14 +99,14 @@ class ApiClient {
     return this.request<T>(endpoint, { method: 'GET' })
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async post<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     })
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async put<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,

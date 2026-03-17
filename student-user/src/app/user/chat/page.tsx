@@ -11,6 +11,8 @@ import { MessageThread } from '@/components/user/MessageThread'
 import { MessageInput } from '@/components/user/MessageInput'
 import { useStudentUser } from '@/hooks/useStudentUser'
 import { createConversation } from '@/lib/chatService'
+import { markConversationAsRead } from '@/lib/conversationService'
+import { Conversation } from '@/types/chat'
 
 export default function UserChatPage() {
   const { user, ready } = useStudentUser()
@@ -32,22 +34,13 @@ export default function UserChatPage() {
   } = useChat({
     userId: user?.id || '',
     userType: 'student',
-
+    userName: user?.name || 'Unknown',
   })
 
   const { users: availableUsers, loading: usersLoading } = useAvailableUsers(
     user?.id || '',
     'student'
   )
-
-  // Debug logging
-  useEffect(() => {
-    console.log('🔍 Chat Debug - Student User:', user)
-    console.log('🔍 Chat Debug - Available Users:', availableUsers)
-    console.log('🔍 Chat Debug - Users Loading:', usersLoading)
-    console.log('🔍 Chat Debug - Conversations:', conversations)
-    console.log('🔍 Chat Debug - Selected Conversation:', selectedConversation)
-  }, [user, availableUsers, usersLoading, conversations, selectedConversation])
 
   useEffect(() => {
     if (error) {
@@ -83,6 +76,8 @@ export default function UserChatPage() {
       setSendingMessage(false)
     }
   }
+
+ 
 
   const handleStartConversation = async (adminId: string, adminName: string) => {
     if (!user) return
@@ -167,7 +162,7 @@ export default function UserChatPage() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto hide-scrollbar">
                 {usersLoading && loading ? (
                   <div className="text-center py-8">
                     <p className="text-gray-500">Loading chats...</p>
@@ -214,7 +209,7 @@ export default function UserChatPage() {
                               }`}
                             >
                               <div className="flex items-start gap-3">
-                                <div className="relative flex-shrink-0">
+                                <div className="relative shrink-0">
                                   <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
                                     {conversation.adminName.charAt(0).toUpperCase()}
                                   </div>
@@ -224,9 +219,14 @@ export default function UserChatPage() {
                                     <p className="font-medium text-black truncate">
                                       {conversation.adminName}
                                     </p>
-                                    <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
-                                      {conversation.lastMessageTime.toLocaleDateString()}
-                                    </span>
+                                    <div className="text-right ml-2 shrink-0">
+                                      <div className="text-xs text-gray-500">
+                                        {conversation.lastMessageTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                      </div>
+                                      <div className="text-xs text-gray-400">
+                                        {conversation.lastMessageTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                      </div>
+                                    </div>
                                   </div>
                                   {adminUser?.email ? (
                                     <p className="text-xs text-gray-500 truncate mt-0.5">
@@ -238,7 +238,7 @@ export default function UserChatPage() {
                                   </p>
                                 </div>
                                 {conversation.studentUnreadCount > 0 && (
-                                  <div className="bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0">
+                                  <div className="bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold shrink-0">
                                     {conversation.studentUnreadCount}
                                   </div>
                                 )}
@@ -254,7 +254,7 @@ export default function UserChatPage() {
                             className="p-3 rounded-lg cursor-pointer transition-colors hover:bg-gray-50"
                           >
                             <div className="flex items-start gap-3">
-                              <div className="relative flex-shrink-0">
+                              <div className="relative shrink-0">
                                 <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
                                   {admin.name.charAt(0).toUpperCase()}
                                 </div>

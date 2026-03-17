@@ -135,8 +135,13 @@ export async function getCounterValues(): Promise<Record<string, { lastNumber: n
     ids.map(async (id) => {
       const snap = await runTransaction(db, async (transaction) => transaction.get(doc(db, 'counters', id)))
       if (!snap.exists()) return
-      const data = snap.data() as any
-      result[id] = { lastNumber: data.lastNumber, prefix: data.prefix }
+      const data = snap.data() as unknown
+      if (!data || typeof data !== 'object') return
+      const record = data as Record<string, unknown>
+      const lastNumber = record.lastNumber
+      const prefix = record.prefix
+      if (typeof lastNumber !== 'number' || typeof prefix !== 'string') return
+      result[id] = { lastNumber, prefix }
     })
   )
 

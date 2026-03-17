@@ -28,7 +28,7 @@ export const useAvailableUsers = (currentUserId: string, userType: 'admin' | 'st
         setError(null)
         console.log('🔍 useAvailableUsers - Loading users for:', { currentUserId, userType })
 
-        let allUsers: any[] = []
+        let allUsers: unknown[] = []
         if (userType === 'admin') {
           allUsers = await getUsersByRole('student')
         } else {
@@ -49,14 +49,27 @@ export const useAvailableUsers = (currentUserId: string, userType: 'admin' | 'st
           )
         )
 
+        const toUserRecord = (u: unknown): { id: string; name: string; email: string; avatar?: string } | null => {
+          if (!u || typeof u !== 'object') return null
+          const r = u as Record<string, unknown>
+          if (typeof r.id !== 'string') return null
+          if (typeof r.name !== 'string') return null
+          if (typeof r.email !== 'string') return null
+          const avatar = typeof r.avatar === 'string' ? r.avatar : undefined
+          return { id: r.id, name: r.name, email: r.email, avatar }
+        }
+
         // Map users to available users - SHOW ALL USERS, NO FILTERING
-        const availableUsers: AvailableUser[] = allUsers.map((user) => ({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          avatar: user.avatar,
-          hasConversation: conversationUserIds.has(user.id),
-        }))
+        const availableUsers: AvailableUser[] = allUsers
+          .map(toUserRecord)
+          .filter((u): u is { id: string; name: string; email: string; avatar?: string } => !!u)
+          .map((user) => ({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            avatar: user.avatar,
+            hasConversation: conversationUserIds.has(user.id),
+          }))
 
         console.log('🔍 useAvailableUsers - Final available users (ALL USERS):', availableUsers)
         setUsers(availableUsers)

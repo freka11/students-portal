@@ -17,12 +17,18 @@ export function useAuth() {
       if (firebaseUser) {
         // Get the ID token to check custom claims
         firebaseUser.getIdTokenResult().then((idTokenResult) => {
-          const claims = idTokenResult.claims as any
+          const claims = idTokenResult.claims as unknown
+          const record: Record<string, unknown> =
+            claims && typeof claims === 'object' ? (claims as Record<string, unknown>) : {}
+          const role = typeof record.role === 'string' ? record.role : 'student'
+          const permissions = Array.isArray(record.permissions)
+            ? record.permissions.filter((p): p is string => typeof p === 'string')
+            : []
           const userData: User = {
             uid: firebaseUser.uid,
             email: firebaseUser.email || '',
-            role: claims?.role || 'student',
-            permissions: claims?.permissions || []
+            role,
+            permissions,
           }
           setUser(userData)
           setLoading(false)

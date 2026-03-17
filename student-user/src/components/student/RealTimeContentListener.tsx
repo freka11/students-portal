@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { initializeApp } from 'firebase/app'
-import { getFirestore, collection, query, where, orderBy, onSnapshot, QuerySnapshot } from 'firebase/firestore'
+import { getFirestore, collection, query, where, orderBy, onSnapshot, QuerySnapshot, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore'
 
 // Initialize Firebase client for real-time listeners
 const firebaseConfig = {
@@ -22,7 +22,7 @@ interface Question {
     uid: string
     name: string
   }
-  createdAt: any
+  createdAt: Timestamp
   publishDate: string
 }
 
@@ -34,7 +34,7 @@ interface Thought {
     uid: string
     name: string
   }
-  createdAt: any
+  createdAt: Timestamp
   publishDate: string
 }
 
@@ -63,17 +63,20 @@ export default function RealTimeContentListener({
     const unsubscribeQuestions = onSnapshot(
       questionsQuery,
       (snapshot: QuerySnapshot) => {
-        const questions = snapshot.docs.map((doc: any) => ({
-          id: doc.id,
-          ...doc.data()
-        } as Question))
+        const questions = snapshot.docs.map((docSnap: QueryDocumentSnapshot<DocumentData>) => {
+          const data = docSnap.data() as Omit<Question, 'id'>
+          return {
+            id: docSnap.id,
+            ...data,
+          }
+        })
         
         setRealTimeQuestions(questions)
         onQuestionsUpdate?.(questions)
         
         console.log('🔄 Real-time questions updated:', questions.length, 'questions')
       },
-      (error: any) => {
+      (error: unknown) => {
         console.error('❌ Real-time questions error:', error)
       }
     )
@@ -86,17 +89,20 @@ export default function RealTimeContentListener({
         orderBy('publishDate', 'desc')
       ),
       (snapshot: QuerySnapshot) => {
-        const thoughts = snapshot.docs.map((doc: any) => ({
-          id: doc.id,
-          ...doc.data()
-        } as Thought))
+        const thoughts = snapshot.docs.map((docSnap: QueryDocumentSnapshot<DocumentData>) => {
+          const data = docSnap.data() as Omit<Thought, 'id'>
+          return {
+            id: docSnap.id,
+            ...data,
+          }
+        })
         
         setRealTimeThoughts(thoughts)
         onThoughtsUpdate?.(thoughts)
         
         console.log('🔄 Real-time thoughts updated:', thoughts.length, 'thoughts')
       },
-      (error: any) => {
+      (error: unknown) => {
         console.error('❌ Real-time thoughts error:', error)
       }
     )

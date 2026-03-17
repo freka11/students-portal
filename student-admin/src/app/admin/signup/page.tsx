@@ -102,6 +102,12 @@ export default function SignUpPage() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         const token = await userCredential.user.getIdToken()
 
+        // Update Firebase user profile with display name
+        const { updateProfile } = await import('firebase/auth')
+        await updateProfile(userCredential.user, {
+          displayName: username
+        })
+
         // Create session via API (non-blocking)
         let sessionData: any = null
         try {

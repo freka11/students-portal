@@ -20,7 +20,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase-client'
 import { Conversation, Message, SendMessageParams } from '@/types/chat'
-import { generateConversationId } from './firestore-refs'
+import { generateAdminConversationId, generateConversationId } from './firestore-refs'
 
 type StaffSenderType = 'admin' | 'teacher' | 'super_admin'
 type SenderType = StaffSenderType | 'student'
@@ -67,7 +67,7 @@ export const getConversationById = async (conversationId: string): Promise<Conve
 // Send a message to Firestore
 export const sendMessage = async (params: SendMessageParams): Promise<string> => {
   try {
-    const { conversationId, content, senderId, senderType } = params
+    const { conversationId, content, senderId, senderType, senderName } = params
 
     // Validate message content
     if (!content.trim()) {
@@ -78,18 +78,13 @@ export const sendMessage = async (params: SendMessageParams): Promise<string> =>
       throw new Error('Message content exceeds maximum length')
     }
 
-    // Get sender name from Firestore
-    const userRef = doc(db, 'users', senderId)
-    const userSnap = await getDoc(userRef)
-    const senderName = userSnap.exists() ? userSnap.data().name : 'Unknown'
-
     // Add message to subcollection
     const messagesRef = collection(db, 'conversations', conversationId, 'messages')
     const messageData = {
       conversationId,
       senderId,
       senderType,
-      senderName,
+      senderName, // Use the provided senderName instead of fetching from Firestore
       content: content.trim(),
       timestamp: serverTimestamp(),
       deliveryStatus: 'sent' as const,
@@ -110,17 +105,20 @@ export const sendMessage = async (params: SendMessageParams): Promise<string> =>
 export const subscribeToConversations = (
   userId: string,
   userType: 'admin' | 'student',
-  callback: (conversations: Conversation[]) => void
+  callback: (conversations: Conversation[]) => void,
+  options?: { isSuperAdmin?: boolean }
 ) => {
   const conversationsRef = collection(db, 'conversations')
 
   // Role-based query logic
   let q
   if (userType === 'admin') {
-    // For admins, we'll implement role-based filtering
-    // For now, show all conversations (super admin behavior)
-    // Later we can filter by assignedTeacherId for teachers
-    q = query(conversationsRef, orderBy('updatedAt', 'desc'))
+    const isSuperAdmin = options?.isSuperAdmin === true
+    if (isSuperAdmin) {
+      q = query(conversationsRef, orderBy('updatedAt', 'desc'))
+    } else {
+      q = query(conversationsRef, where('adminId', '==', userId), orderBy('updatedAt', 'desc'))
+    }
   } else {
     // Students only see their own conversations
     q = query(conversationsRef, where('studentId', '==', userId), orderBy('updatedAt', 'desc'))
@@ -389,7 +387,7 @@ export const createConversation = async (
   studentAvatar?: string
 ): Promise<string> => {
   try {
-    const conversationId = generateConversationId(adminId, studentId)
+    const conversationId = generateAdminConversationId(adminId, studentId)
     const conversationRef = doc(db, 'conversations', conversationId)
 
     // Check if conversation already exists
@@ -429,20 +427,25 @@ export const updateLastMessage = async (
   conversationId: string,
   message: string,
   senderId: string,
-  userType: UserType
+  userType: UserType,
+  currentSelectedConversationId?: string | null
 ): Promise<void> => {
   try {
     const conversationRef = doc(db, 'conversations', conversationId)
     // Students increment adminUnreadCount; staff increment studentUnreadCount
     const unreadCountField = userType === 'student' ? 'adminUnreadCount' : 'studentUnreadCount'
 
+    // Only increment unread count if conversation is NOT currently selected
+    // This implements WhatsApp/Slack logic where unread count doesn't increase while chat is open
+    const shouldIncrementUnread = currentSelectedConversationId !== conversationId
+
     await updateDoc(conversationRef, {
-  lastMessage: message,
-  lastMessageTime: serverTimestamp(),
-  lastMessageSenderId: senderId,
-  [unreadCountField]: increment(1),
-  updatedAt: serverTimestamp(),
-})
+      lastMessage: message,
+      lastMessageTime: serverTimestamp(),
+      lastMessageSenderId: senderId,
+      [unreadCountField]: shouldIncrementUnread ? increment(1) : 0,
+      updatedAt: serverTimestamp(),
+    })
 
   } catch (error) {
     console.error('Error updating last message:', error)

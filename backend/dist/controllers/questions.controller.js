@@ -10,7 +10,7 @@ const firebaseAdmin_1 = require("../config/firebaseAdmin");
 async function getQuestions(req, res) {
     try {
         const dateFilter = req.query.date;
-        const isAdmin = req.user?.role === 'admin' || req.user?.role === 'super_admin';
+        const isAdmin = req.user?.role === 'admin' || req.user?.role === 'super_admin' || req.user?.role === 'teacher';
         const questionsQuery = firebaseAdmin_1.adminFirestore.collection('questions');
         if (dateFilter === 'all') {
             const snapshot = await questionsQuery.get();
@@ -38,15 +38,16 @@ async function getQuestions(req, res) {
 // ─── POST /api/questions (admin auth required) ─────────────────────
 async function createQuestion(req, res) {
     try {
-        const { question } = req.body;
-        if (!question || question.trim() === '') {
+        const questionText = req.body?.text ?? req.body?.question;
+        const requestedStatus = req.body?.status;
+        if (!questionText || questionText.trim() === '') {
             res.status(400).json({ success: false, message: 'Question text is required' });
             return;
         }
         const user = req.user;
         const questionDoc = {
-            text: question,
-            status: 'published',
+            text: questionText.trim(),
+            status: requestedStatus === 'draft' ? 'draft' : 'published',
             deleted: false,
             createdBy: {
                 uid: user.uid,
@@ -74,7 +75,7 @@ async function createQuestion(req, res) {
 // ─── PUT /api/questions?id=xxx ──────────────────────────────────────
 async function updateQuestion(req, res) {
     try {
-        const questionId = req.query.id;
+        const questionId = req.query.id || req.body?.id;
         const { text } = req.body;
         if (!questionId) {
             res.status(400).json({ success: false, message: 'Question ID is required' });
@@ -98,7 +99,7 @@ async function updateQuestion(req, res) {
 // ─── DELETE /api/questions?id=xxx ───────────────────────────────────
 async function deleteQuestion(req, res) {
     try {
-        const questionId = req.query.id;
+        const questionId = req.query.id || req.body?.id;
         if (!questionId) {
             res.status(400).json({ success: false, message: 'Question ID is required' });
             return;
@@ -117,7 +118,7 @@ async function deleteQuestion(req, res) {
 // ─── PATCH /api/questions?id=xxx ────────────────────────────────────
 async function patchQuestion(req, res) {
     try {
-        const questionId = req.query.id;
+        const questionId = req.query.id || req.body?.id;
         const updates = req.body;
         if (!questionId) {
             res.status(400).json({ success: false, message: 'Question ID is required' });

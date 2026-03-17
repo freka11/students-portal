@@ -57,6 +57,7 @@ export interface SendMessageParams {
   content: string
   senderId: string
   senderType: 'admin' | 'student'
+  senderName: string
 }
 
 export interface ConversationMetadata {

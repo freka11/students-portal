@@ -103,7 +103,7 @@ export default function LoginPage() {
         )
 
         // Create session via API (non-blocking)
-        let sessionData: any = null
+        let sessionData: unknown = null
         try {
           const sessionResponse = await authSessionPost(token)
           if (!sessionResponse.ok) {
@@ -116,21 +116,36 @@ export default function LoginPage() {
           return
         }
 
+        const sessionRecord: Record<string, unknown> | null =
+          sessionData && typeof sessionData === 'object'
+            ? (sessionData as Record<string, unknown>)
+            : null
+        const sessionUser =
+          sessionRecord?.user && typeof sessionRecord.user === 'object'
+            ? (sessionRecord.user as Record<string, unknown>)
+            : null
+
         // Store user data with role
         const userData = {
           id: userCredential.user.uid,
           email: userCredential.user.email,
           name: userCredential.user.displayName || username,
           username: username,
-          role: sessionData?.user?.role || 'student',
-          permissions: sessionData?.user?.permissions || [],
+          role: typeof sessionUser?.role === 'string' ? sessionUser.role : 'student',
+          permissions: Array.isArray(sessionUser?.permissions) ? sessionUser.permissions : [],
         }
 
         localStorage.setItem('user', JSON.stringify(userData))
         router.push('/user/dashboard')
         
-      } catch (firebaseError: any) {
+      } catch (firebaseError: unknown) {
         console.error('Firebase auth error:', firebaseError)
+
+        const errRecord: Record<string, unknown> =
+          firebaseError && typeof firebaseError === 'object'
+            ? (firebaseError as Record<string, unknown>)
+            : {}
+        const errCode = typeof errRecord.code === 'string' ? errRecord.code : ''
 
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/43ca688c-b42f-4b46-b34a-008376a5d4f5', {
@@ -142,9 +157,9 @@ export default function LoginPage() {
             location: 'src/app/user/login/page.tsx:handleSubmit',
             message: 'Firebase auth error',
             data: {
-              code: firebaseError?.code || null,
-              name: firebaseError?.name || null,
-              message: firebaseError?.message || null,
+              code: typeof errRecord.code === 'string' ? errRecord.code : null,
+              name: typeof errRecord.name === 'string' ? errRecord.name : null,
+              message: typeof errRecord.message === 'string' ? errRecord.message : null,
             },
             runId: 'pre-fix',
             hypothesisId: 'H3'
@@ -153,13 +168,13 @@ export default function LoginPage() {
         // #endregion
         
         // Handle specific Firebase auth errors
-        if (firebaseError.code === 'auth/user-not-found') {
+        if (errCode === 'auth/user-not-found') {
           addToast('User not found', 'error')
-        } else if (firebaseError.code === 'auth/wrong-password') {
+        } else if (errCode === 'auth/wrong-password') {
           addToast('Invalid password', 'error')
-        } else if (firebaseError.code === 'auth/invalid-email') {
+        } else if (errCode === 'auth/invalid-email') {
           addToast('Invalid email format', 'error')
-        } else if (firebaseError.code === 'auth/invalid-credential') {
+        } else if (errCode === 'auth/invalid-credential') {
           addToast('Invalid credential. Check email/password or Firebase config.', 'error')
         } else {
           addToast('Authentication failed', 'error')

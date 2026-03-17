@@ -117,7 +117,7 @@ export default function SignupPage() {
       )
 
       // Create session via API (non-blocking)
-      let sessionData: any = null
+      let sessionData: unknown = null
       try {
         const sessionResponse = await authSessionPost(token)
         if (!sessionResponse.ok) {
@@ -130,19 +130,29 @@ export default function SignupPage() {
         return
       }
 
+      const sessionRecord: Record<string, unknown> | null =
+        sessionData && typeof sessionData === 'object'
+          ? (sessionData as Record<string, unknown>)
+          : null
+      const sessionUser =
+        sessionRecord?.user && typeof sessionRecord.user === 'object'
+          ? (sessionRecord.user as Record<string, unknown>)
+          : null
+
       const userData = {
         id: userCredential.user.uid,
         email: userCredential.user.email,
         name: userCredential.user.displayName || trimmedUsername,
         username: trimmedUsername,
-        role: sessionData?.user?.role || 'student',
-        permissions: sessionData?.user?.permissions || [],
+        role: typeof sessionUser?.role === 'string' ? sessionUser.role : 'student',
+        permissions: Array.isArray(sessionUser?.permissions) ? sessionUser?.permissions : [],
       }
 
       localStorage.setItem('user', JSON.stringify(userData))
       router.push('/user/dashboard')
-    } catch (err: any) {
-      const code = err?.code || ''
+    } catch (err: unknown) {
+      const record = err && typeof err === 'object' ? (err as Record<string, unknown>) : {}
+      const code = typeof record.code === 'string' ? record.code : ''
 
       if (code === 'auth/email-already-in-use') {
         addToast('Email already in use. Try logging in.', 'error')

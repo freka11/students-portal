@@ -76,7 +76,6 @@ function AnswerModal({ question, user, existingAnswer, onClose, onAnswerSubmitte
     setIsSubmitting(true)
     
     try {
-      await auth.authStateReady()
       const response = await answers.post({
         questionId: question.id,
         answer: answer.trim(),
@@ -93,20 +92,24 @@ function AnswerModal({ question, user, existingAnswer, onClose, onAnswerSubmitte
       } else {
         const status = response.status
         const raw = await response.text()
-        let errorData: any = null
+        let errorData: unknown = null
 
         try {
-          errorData = raw ? JSON.parse(raw) : null
+          errorData = raw ? (JSON.parse(raw) as unknown) : null
         } catch {
           errorData = null
         }
+
+        const errorRecord: Record<string, unknown> | null =
+          errorData && typeof errorData === 'object' ? (errorData as Record<string, unknown>) : null
 
         console.error(`Submit failed (${status})`, raw || '(empty response body)', errorData)
 
         if (status === 401) {
           addToast('Session expired. Please log in again.', 'error')
         } else {
-          addToast(errorData?.message || 'Failed to submit answer', 'error')
+          const message = typeof errorRecord?.message === 'string' ? errorRecord.message : 'Failed to submit answer'
+          addToast(message, 'error')
         }
       }
     } catch (error) {
@@ -204,7 +207,6 @@ export default function SimpleDashboard() {
       try {
         const today = new Date().toISOString().split('T')[0]
         
-        await auth.authStateReady()
         const token = await auth.currentUser?.getIdToken()
         const headers = token ? { 'Authorization': `Bearer ${token}` } : undefined
 
@@ -362,7 +364,7 @@ export default function SimpleDashboard() {
     <div className="p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-black">Student Dashboard </h1>
-        <p className="text-black mt-2">Welcome back! Here's your learning progress </p>
+        <p className="text-black mt-2">Welcome back! Here&apos;s your learning progress </p>
       </div>
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 ">
@@ -404,13 +406,13 @@ export default function SimpleDashboard() {
               </div>
             ) : dailyContent.thought ? (
               <p className="text-lg text-black italic text-center">
-                "{dailyContent.thought.text}"
+                &quot;{dailyContent.thought.text}&quot;
               </p>
             ) : (
               <div className="text-center py-4">
                 <Lightbulb className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-black font-medium mb-1">No Thought Available</p>
-                <p className="text-sm text-black">Check back later for today's inspiration!</p>
+                <p className="text-sm text-black">Check back later for today&apos;s inspiration!</p>
               </div>
             )}
           </div>
@@ -508,7 +510,7 @@ export default function SimpleDashboard() {
               <div className="text-center py-4">
                 <HelpCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-black font-medium mb-1">No Questions Available</p>
-                <p className="text-sm text-black">Check back later for today's questions!</p>
+                <p className="text-sm text-black">Check back later for today&apos;s questions!</p>
               </div>
             )}
           </div>
