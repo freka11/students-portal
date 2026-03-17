@@ -17,13 +17,20 @@ const PORT = Number(process.env.PORT) || 5000
 // ─── Middleware ─────────────────────────────────────────────────────
 app.use(cors({
     origin: [
+        // Development URLs
         'http://localhost:3000', 
         'http://localhost:3001', 
         'http://localhost:3002', 
         'http://localhost:3003',
+        
+        // Backend URL (for self-reference)
+        'https://students-portal-cxn8.onrender.com',
+        
+        // Vercel deployment URLs (will be updated after deployment)
         'https://student-admin.vercel.app',
         'https://student-user.vercel.app',
-        // Add custom domains here when ready
+        
+        // Custom domains (add when ready)
         // 'https://admin.yourdomain.com',
         // 'https://app.yourdomain.com'
     ],
