@@ -6,6 +6,8 @@ import { Button } from '@/components/admin/Button'
 import { useToast } from '@/components/admin/Toast'
 import { Users, CheckCircle, AlertCircle } from 'lucide-react'
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+
 interface UserResult {
   username: string
   email: string
@@ -33,7 +35,7 @@ export default function SetupPage() {
     setResult(null)
 
     try {
-      const response = await fetch('http://localhost:5000/api/setup-users', {
+      const response = await fetch(`${API_BASE_URL}/api/setup-users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       })
@@ -57,7 +59,7 @@ export default function SetupPage() {
 
   const handleCheckUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/setup-users')
+      const response = await fetch(`${API_BASE_URL}/api/setup-users`)
       const data = await response.json()
 
       if (response.ok) {
@@ -183,8 +185,10 @@ export default function SetupPage() {
         <h3 className="font-medium text-blue-900 mb-2">Next Steps:</h3>
         <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
           <li>Run the setup to create test users</li>
-          <li>Go to <strong>Student Login</strong> and login with student1/student123 or student2/student123</li>
-          <li>Go to <strong>Admin Login</strong> and login with teacher1/teacher123 or teacher2/teacher123</li>
+          <li>Go to <strong>Student Login</strong> and login with 
+          student1/student123 or student2/student123</li>
+          <li>Go to <strong>Admin Login</strong> and login with 
+          teacher1/teacher123 or teacher2/teacher123</li>
           <li>Navigate to the chat pages to test messaging</li>
         </ol>
       </div>

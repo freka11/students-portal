@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/admin/Button'
 import { useToast } from '@/components/admin/Toast'
 import { auth } from '@/lib/firebase-client'
+import { config } from '@/lib/config'
 import { Lightbulb, HelpCircle, Edit, Users, MessageSquare } from 'lucide-react'
 
 
@@ -44,6 +45,7 @@ export default function Dashboard() {
   const [todayThought, setTodayThought] = useState<Thought | null>(null)
   const [todayQuestions, setTodayQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
   const { addToast, ToastContainer } = useToast()
   const { admin, ready } = useAdminUser()
   
@@ -51,6 +53,10 @@ export default function Dashboard() {
   const handleOpenModal = () => {
     setIsModalOpen(true)
   }
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Load today's content from JSON APIs
   useEffect(() => {
@@ -69,7 +75,7 @@ export default function Dashboard() {
         const today = new Date().toISOString().split('T')[0]
         
         // Load thoughts
-        const thoughtsResponse = await fetch('http://localhost:5000/api/thoughts', { headers })
+        const thoughtsResponse = await fetch(`${config.API_BASE_URL}/api/thoughts`, { headers })
         if (!thoughtsResponse.ok) {
           throw new Error(`Failed to fetch thoughts: ${thoughtsResponse.status}`)
         }
@@ -81,7 +87,7 @@ export default function Dashboard() {
         setTodayThought(todayThought || null)
         
         // Load questions
-        const questionsResponse = await fetch('http://localhost:5000/api/questions', { headers })
+        const questionsResponse = await fetch(`${config.API_BASE_URL}/api/questions`, { headers })
         if (!questionsResponse.ok) {
           throw new Error(`Failed to fetch questions: ${questionsResponse.status}`)
         }
@@ -139,6 +145,9 @@ export default function Dashboard() {
       
     }
   ]
+
+  // Prevent hydration mismatch
+  if (!mounted) return null
 
 
 

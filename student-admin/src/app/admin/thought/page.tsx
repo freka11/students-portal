@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { Trash2, Lightbulb, Plus } from 'lucide-react'
 import { Button } from '@/components/admin/Button'
+import { config } from '@/lib/config'
 import { useToast } from '@/components/admin/Toast'
 import { Modal } from '@/components/admin/Modal'
 import { ThoughtHistory } from '@/components/admin/ThoughtHistory'
@@ -39,7 +40,7 @@ function ThoughtPageContent() {
       // Try to fetch from API first
       const token = await auth.currentUser?.getIdToken()
       const headers = token ? { 'Authorization': `Bearer ${token}` } : undefined
-      const res = await fetch('http://localhost:5000/api/thoughts', { headers })
+      const res = await fetch(`${config.API_BASE_URL}/api/thoughts`, { headers })
       if (res.ok) {
         const thoughts: any[] = await res.json()
         console.log('All thoughts from API:', thoughts)
@@ -139,7 +140,7 @@ function ThoughtPageContent() {
       console.log('Deleting thought with ID:', currentThought.id)
       const token = await auth.currentUser?.getIdToken()
       const headers = token ? { 'Authorization': `Bearer ${token}` } : undefined
-      const res = await fetch(`http://localhost:5000/api/thoughts?id=${currentThought.id}`, {
+      const res = await fetch(`${config.API_BASE_URL}/api/thoughts?id=${currentThought.id}`, {
         method: 'DELETE',
         headers
       })

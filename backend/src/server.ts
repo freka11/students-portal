@@ -27,11 +27,9 @@ app.use(cors({
         // Backend URL (for self-reference)
         'https://students-portal-cxn8.onrender.com',
         
-        // Vercel deployment URLs (ALL URLs)
-        'https://students-portal-xi.vercel.app',                   
-        'https://students-portal-6khh.vercel.app',                  
-        'https://students-portal-6khh-ljmvobegt-likihths-projects.vercel.app', 
-        'https://students-portal-8rtc0luy3-likihths-projects.vercel.app', 
+        // Vercel deployment URLs (will be updated after deployment)
+        'https://student-admin.vercel.app',
+        'https://student-user.vercel.app',
         
         // Custom domains (add when ready)
         // 'https://admin.yourdomain.com',
@@ -43,9 +41,6 @@ app.use(cors({
 }))
 
 app.use(express.json())
-
-// ─── CORS Preflight Handler ─────────────────────────────────────
-app.options('*', cors())
 
 // ─── Health Check ───────────────────────────────────────────────────
 app.get('/health', (_req, res) => {

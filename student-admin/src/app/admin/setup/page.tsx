@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/admin/Card'
 import { Button } from '@/components/admin/Button'
 import { useToast } from '@/components/admin/Toast'
+import { config } from '@/lib/config'
 import { Users, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface UserResult {
@@ -33,7 +34,7 @@ export default function SetupPage() {
     setResult(null)
 
     try {
-      const response = await fetch('http://localhost:5000/api/setup-users', {
+      const response = await fetch(`${config.API_BASE_URL}/api/setup-users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       })
@@ -57,7 +58,7 @@ export default function SetupPage() {
 
   const handleCheckUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/setup-users')
+      const response = await fetch(`${config.API_BASE_URL}/api/setup-users`)
       const data = await response.json()
 
       if (response.ok) {

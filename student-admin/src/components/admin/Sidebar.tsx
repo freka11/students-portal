@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   Lightbulb,
   HelpCircle,
-  MessageSquare,
+  MessageSquare,      
   Menu,
   X,
   User,
@@ -28,7 +28,12 @@ export function Sidebar() {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { admin, ready } = useAdminUser();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!ready) return;
@@ -41,6 +46,9 @@ export function Sidebar() {
     localStorage.removeItem("adminUser");
     router.push("/admin/login");
   };
+
+  // Prevent hydration mismatch
+  if (!mounted) return null;
 
   // Don't return null to avoid hydration issues - handle loading state internally
   if (!admin || !ready) {
@@ -74,7 +82,7 @@ export function Sidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200 active:scale-100"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200"
       >
         {isMobileMenuOpen ? (
           <X className="h-5 w-5" />
@@ -97,7 +105,7 @@ export function Sidebar() {
           fixed top-0 left-0 z-50 h-full w-64 bg-white shadow-lg
           transition-transform duration-300 ease-in-out
           lg:static lg:translate-x-0
-          ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
+          ${isMobileMenuOpen ? '-translate-x-full' : 'translate-x-0'}
         `}
       >
         {/* Admin Info */}
