@@ -27,9 +27,11 @@ app.use(cors({
         // Backend URL (for self-reference)
         'https://students-portal-cxn8.onrender.com',
         
-        // Vercel deployment URLs (ACTUAL URLs)
-        'https://students-portal-xi.vercel.app',    // Admin frontend
-        'https://students-portal-6khh.vercel.app',  // User frontend
+        // Vercel deployment URLs (ALL URLs)
+        'https://students-portal-xi.vercel.app',                    // Admin frontend
+        'https://students-portal-6khh.vercel.app',                  // User frontend
+        'https://students-portal-6khh-ljmvobegt-likihths-projects.vercel.app', // User frontend (preview)
+        'https://students-portal-8rtc0luy3-likihths-projects.vercel.app', // Additional frontend
         
         // Custom domains (add when ready)
         // 'https://admin.yourdomain.com',
