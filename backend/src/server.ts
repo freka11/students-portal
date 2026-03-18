@@ -22,13 +22,14 @@ app.use(cors({
         'http://localhost:3001', 
         'http://localhost:3002', 
         'http://localhost:3003',
+        'http://localhost:5000', // Backend itself
         
         // Backend URL (for self-reference)
         'https://students-portal-cxn8.onrender.com',
         
-        // Vercel deployment URLs (will be updated after deployment)
-        'https://student-admin.vercel.app',
-        'https://student-user.vercel.app',
+        // Vercel deployment URLs (ACTUAL URLs)
+        'https://students-portal-xi.vercel.app',    // Admin frontend
+        'https://students-portal-6khh.vercel.app',  // User frontend
         
         // Custom domains (add when ready)
         // 'https://admin.yourdomain.com',

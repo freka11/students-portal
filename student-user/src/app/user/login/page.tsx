@@ -210,7 +210,7 @@ export default function LoginPage() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your username (rahul or likhith)"
+                  placeholder="Enter your username or email"
                 />
               </div>
 
@@ -222,7 +222,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password (rahul123 or likhith123)"
+                  placeholder="Enter your password"
                 />
               </div>
 
