@@ -52,17 +52,7 @@ useEffect(() => {
       userId,
       userType,
       (convs) => {
-        // Preserve unread count for selected conversation to avoid flicker
-        setConversations(prevConvs => {
-          const selectedConv = prevConvs.find(c => c.id === selectedConversation?.id)
-          return convs.map(c => {
-            if (selectedConv && c.id === selectedConv.id) {
-              // Keep the local unread count (should be 0 after marking as read)
-              return { ...c, adminUnreadCount: selectedConv.adminUnreadCount }
-            }
-            return c
-          })
-        })
+        setConversations(convs)
         setHasLoaded(true)
       },
       { isSuperAdmin: options.isSuperAdmin === true }
@@ -73,17 +63,7 @@ useEffect(() => {
       userId,
       userType,
       (convs) => {
-        // Preserve unread count for selected conversation to avoid flicker
-        setConversations(prevConvs => {
-          const selectedConv = prevConvs.find(c => c.id === selectedConversation?.id)
-          return convs.map(c => {
-            if (selectedConv && c.id === selectedConv.id) {
-              // Keep the local unread count (should be 0 after marking as read)
-              return { ...c, studentUnreadCount: selectedConv.studentUnreadCount }
-            }
-            return c
-          })
-        })
+        setConversations(convs)
         setHasLoaded(true)
       }
     )
@@ -93,14 +73,6 @@ useEffect(() => {
     if (unsubscribe) unsubscribe()
   }
 }, [userId, userType, options.enabled])
-
-useEffect(() => {
-  if (!selectedConversation) return
-  
-  // Also mark as read when messages are loaded to ensure unread count is reset
-  markConversationAsRead(selectedConversation.id, userType)
-}, [selectedConversation?.id, userType])
-
 
   // Sort conversations by most recent message (memoized)
   const sortedConversations = useMemo(
@@ -139,27 +111,10 @@ useEffect(() => {
 
       if (conv) {
         setSelectedConversation(conv)
-        // Mark conversation as read immediately to set unread count to 0
-        try {
-          await markConversationAsRead(conversationId, userType)
-          
-          // Immediately update local state to reflect unread count change
-          setConversations(prevConvs => {
-            const updated = prevConvs.map(c => 
-              c.id === conversationId 
-                ? { ...c, adminUnreadCount: 0 }
-                : c
-            )
-            return updated
-          })
-          
-          // Force a re-render by updating with a new array reference
-          setTimeout(() => {
-            setConversations(prevConvs => [...prevConvs])
-          }, 0)
-        } catch (err) {
+        // Mark conversation as read - Firestore will update unread count to 0
+        markConversationAsRead(conversationId, userType).catch(err => {
           console.error('Error marking conversation as read:', err)
-        }
+        })
       }
     },
     [conversations, userId, userType]
@@ -185,8 +140,7 @@ useEffect(() => {
           selectedConversation.id,
           content,
           userId,
-          userType,
-          selectedConversation.id  // Pass selected conversation ID to prevent unread increment
+          userType
         )
 
         return messageId

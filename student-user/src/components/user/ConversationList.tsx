@@ -69,29 +69,27 @@ export const ConversationList = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p className="font-medium text-black truncate">{conversation.adminName}</p>
-                      <div className="text-right ml-2 flex-shrink-0">
-                        <div className="text-xs text-gray-500">
-                          {formatTime(conversation.lastMessageTime)}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {formatDate(conversation.lastMessageTime)}
-                        </div>
-                      </div>
                     </div>
                     {!!getSecondaryText?.(conversation) && (
                       <p className="text-xs text-gray-500 truncate mt-0.5">
                         {getSecondaryText(conversation)}
                       </p>
                     )}
-                    <p className="text-sm text-gray-600 truncate mt-1">
-                      {conversation.lastMessage || 'No messages yet'}
-                    </p>
-                  </div>
-                  {conversation.studentUnreadCount > 0 && selectedId !== conversation.id && (
-                    <div className="bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold flex-shrink-0">
-                      {conversation.studentUnreadCount}
+                    <div className="mt-1 flex items-center gap-2">
+                      <p className="text-sm text-gray-600 truncate">
+                        {conversation.lastMessage || 'No messages yet'}
+                      </p>
+                      {conversation.studentUnreadCount > 0 && (
+                        <span className="bg-green-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                          {conversation.studentUnreadCount}
+                        </span>
+                      )}
                     </div>
-                  )}
+                    <div className="mt-1 flex justify-end gap-2">
+                      <div className="text-xs text-gray-500">{formatTime(conversation.lastMessageTime)}</div>
+                      <div className="text-xs text-gray-400">{formatDate(conversation.lastMessageTime)}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}

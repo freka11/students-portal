@@ -371,15 +371,11 @@ export const updateLastMessage = async (
     // Admin messages increment studentUnreadCount; student messages increment adminUnreadCount
     const unreadCountField = userType === 'admin' ? 'studentUnreadCount' : 'adminUnreadCount'
 
-    // Only increment unread count if conversation is NOT currently selected
-    // This implements WhatsApp/Slack logic where unread count doesn't increase while chat is open
-    const shouldIncrementUnread = currentSelectedConversationId !== conversationId
-
     await updateDoc(conversationRef, {
       lastMessage: message,
       lastMessageTime: serverTimestamp(),
       lastMessageSenderId: senderId,
-      [unreadCountField]: shouldIncrementUnread ? increment(1) : 0,
+      [unreadCountField]: increment(1),
       updatedAt: serverTimestamp(),
     })
 
