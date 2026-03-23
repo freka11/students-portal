@@ -5,7 +5,12 @@
  */
 import { getStudentIdToken } from './auth'
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
+// Helper function to normalize API URLs (remove trailing slashes)
+const normalizeApiUrl = (url: string): string => {
+  return url.replace(/\/$/, ''); // Remove trailing slash if present
+};
+
+const BASE = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000')
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getStudentIdToken()

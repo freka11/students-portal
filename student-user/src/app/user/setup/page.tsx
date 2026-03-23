@@ -6,7 +6,12 @@ import { Button } from '@/components/admin/Button'
 import { useToast } from '@/components/admin/Toast'
 import { Users, CheckCircle, AlertCircle } from 'lucide-react'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+// Helper function to normalize API URLs (remove trailing slashes)
+const normalizeApiUrl = (url: string): string => {
+  return url.replace(/\/$/, ''); // Remove trailing slash if present
+};
+
+const API_BASE_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000')
 
 interface UserResult {
   username: string
