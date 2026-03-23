@@ -75,6 +75,15 @@ export async function postSession(req: Request, res: Response) {
             permissions: ['admin', 'super_admin'].includes(role) ? ['read', 'write', 'delete'] : ['read', 'write'],
         }
 
+        // Set session cookie - valid for 24 hours
+        res.cookie('session', JSON.stringify(sessionData), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            path: '/',
+        })
+
         console.log('✅ Session created for:', email, 'Role:', role, 'PublicId:', publicId)
 
         res.json({ success: true, user: sessionData })

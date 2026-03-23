@@ -43,6 +43,7 @@ export async function authSessionPost(token: string) {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
+    credentials: 'include', // Allow cross-domain cookies
   })
 }
 
