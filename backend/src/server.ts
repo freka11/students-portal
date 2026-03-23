@@ -24,12 +24,18 @@ app.use(cors({
         'http://localhost:3003',
         'http://localhost:5000', // Backend itself
         
-        // Backend URL (for self-reference)
-        'https://students-portal-cxn8.onrender.com',
+        // Production Backend URL
+        'https://students-portal-t5gy.onrender.com',
         
-        // Vercel deployment URLs (will be updated after deployment)
-        'https://student-admin.vercel.app',
-        'https://student-user.vercel.app',
+        // Vercel deployment URLs
+        'https://students-portal-yhz8.vercel.app',
+        'https://students-portal-omega.vercel.app',
+        
+        // Vercel subdomains (for branches/previews)
+        'https://students-portal-yhz8-git-main-likihths-projects.vercel.app',
+        'https://students-portal-yhz8-k5y1433hd-likihths-projects.vercel.app',
+        'https://students-portal-git-main-likihths-projects.vercel.app',
+        'https://students-portal-iz4g69dvc-likihths-projects.vercel.app',
         
         // Custom domains (add when ready)
         // 'https://admin.yourdomain.com',
