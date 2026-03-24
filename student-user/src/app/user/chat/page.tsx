@@ -323,8 +323,7 @@ export default function UserChatPage() {
                 </>
               ) : (
                 <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center">
-                    <MessageSquare className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <div className="text-center p-2">
                     <p className="text-black text-lg">Select an admin to start chatting</p>
                     <p className="text-black text-sm mt-2">Choose from the admin list on the left</p>
                   </div>

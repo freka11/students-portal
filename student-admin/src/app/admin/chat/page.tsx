@@ -515,8 +515,8 @@ export default function ChatPage() {
               ) : (
                 <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-center">
                   <div className="text-center">
-                    <p className="text-black text-lg">Select a student to start chatting</p>
-                    <p className="text-black text-sm mt-2">Choose from the student list on the left</p>
+                    <p className="text-black text-lg p-2">Select a student to start chatting</p>
+                    <p className="text-black text-sm mt-2 p-2">Choose from the student list on the left</p>
                   </div>
                 </div>
               )}
