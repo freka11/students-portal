@@ -334,11 +334,10 @@ export default function UserChatPage() {
         </div>
 
         {!selectedConversation && (
-          <div className="flex-1 min-h-0 lg:hidden">
-            <Card className="h-full">
+          <div className="flex-1 min-h-0 lg:hidden p-2">
+            <Card className="h-full p-2">
               <CardContent className="h-full flex items-center justify-center">
                 <div className="text-center">
-                  <MessageSquare className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <p className="text-black text-lg">Select an admin to start chatting</p>
                   <p className="text-black text-sm mt-2">Choose from the admin list above</p>
                 </div>
