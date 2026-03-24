@@ -31,6 +31,7 @@ export default function AnswersPage() {
   const [selectedAnswer, setSelectedAnswer] = useState<UserAnswer | null>(null)
   const [showViewModal, setShowViewModal] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const itemsPerPage = 5
@@ -40,6 +41,7 @@ export default function AnswersPage() {
   const { user, ready } = useStudentUser()
 
   const loadAnswers = async () => {
+    setIsInitialLoading(true)
     try {
       await auth.authStateReady()
       const token = await auth.currentUser?.getIdToken()
@@ -121,12 +123,17 @@ export default function AnswersPage() {
       console.error('Failed to load answers:', error)
       setAnswers([])
       setFilteredAnswers([])
+    } finally {
+      setIsInitialLoading(false)
     }
   }
 
   useEffect(() => {
     if (!ready) return
-    if (!user) return
+    if (!user) {
+      setIsInitialLoading(false)
+      return
+    }
 
     const timeout = setTimeout(() => {
       loadAnswers()
@@ -333,7 +340,17 @@ export default function AnswersPage() {
       </Card>
 
       {/* Answers List */}
-      {filteredAnswers.length === 0 ? (
+      {isInitialLoading ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-10 w-10 text-purple-600 animate-spin" />
+              <h2 className="text-xl font-semibold text-black">Loading your answers...</h2>
+              <p className="text-gray-600">Please wait while we fetch your saved answers.</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : filteredAnswers.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
             <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />

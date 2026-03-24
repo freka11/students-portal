@@ -24,6 +24,7 @@ function ThoughtPageContent() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentThought, setCurrentThought] =
     useState<ThoughtHistoryItem | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   const { addToast, ToastContainer } = useToast()
 
@@ -33,59 +34,64 @@ function ThoughtPageContent() {
   const { admin, ready } = useAdminUser()
 
   const loadTodayThought = async () => {
+    setIsLoading(true)
     try {
-      const today = new Date().toISOString().split('T')[0]
-      console.log('Loading thought for date:', today)
+      try {
+        const today = new Date().toISOString().split('T')[0]
+        console.log('Loading thought for date:', today)
 
-      // Try to fetch from API first
-      const token = await auth.currentUser?.getIdToken()
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : undefined
-      const res = await fetch(`${config.API_BASE_URL}/api/thoughts`, { headers })
-      if (res.ok) {
-        const thoughts: any[] = await res.json()
-        console.log('All thoughts from API:', thoughts)
+        // Try to fetch from API first
+        const token = await auth.currentUser?.getIdToken()
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : undefined
+        const res = await fetch(`${config.API_BASE_URL}/api/thoughts`, { headers })
+        if (res.ok) {
+          const thoughts: any[] = await res.json()
+          console.log('All thoughts from API:', thoughts)
 
-        // Map API data structure to frontend interface
-        const mappedThoughts = thoughts.map(thought => ({
-          id: thought.id,
-          content: thought.text,
-          date: thought.publishDate,
-          adminName: thought.createdBy?.name || 'Admin',
-        }))
+          // Map API data structure to frontend interface
+          const mappedThoughts = thoughts.map(thought => ({
+            id: thought.id,
+            content: thought.text,
+            date: thought.publishDate,
+            adminName: thought.createdBy?.name || 'Admin',
+          }))
 
-        const todayThought = mappedThoughts.find(t => t.date === today)
-        console.log('Today\'s thought found from API:', todayThought)
-        
-        if (todayThought) {
-          setCurrentThought(todayThought)
-          return
+          const todayThought = mappedThoughts.find(t => t.date === today)
+          console.log('Today\'s thought found from API:', todayThought)
+          
+          if (todayThought) {
+            setCurrentThought(todayThought)
+            return
+          }
         }
+      } catch (error) {
+        console.log('API mode failed, falling back to localStorage')
       }
-    } catch (error) {
-      console.log('API mode failed, falling back to localStorage')
-    }
 
-    // Fallback to localStorage
-    try {
-      const today = new Date().toISOString().split('T')[0]
-      const savedThought = localStorage.getItem('dailyThought')
-      
-      if (savedThought) {
-        console.log('Found thought in localStorage:', savedThought)
-        const thoughtItem: ThoughtHistoryItem = {
-          id: 'localStorage',
-          content: savedThought,
-          date: today,
-          adminName: 'Current Admin',
+      // Fallback to localStorage
+      try {
+        const today = new Date().toISOString().split('T')[0]
+        const savedThought = localStorage.getItem('dailyThought')
+        
+        if (savedThought) {
+          console.log('Found thought in localStorage:', savedThought)
+          const thoughtItem: ThoughtHistoryItem = {
+            id: 'localStorage',
+            content: savedThought,
+            date: today,
+            adminName: 'Current Admin',
+          }
+          setCurrentThought(thoughtItem)
+        } else {
+          console.log('No thought found in localStorage for today')
+          setCurrentThought(null)
         }
-        setCurrentThought(thoughtItem)
-      } else {
-        console.log('No thought found in localStorage for today')
+      } catch (err) {
+        console.error('Failed to load from localStorage:', err)
         setCurrentThought(null)
       }
-    } catch (err) {
-      console.error('Failed to load from localStorage:', err)
-      setCurrentThought(null)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -201,27 +207,17 @@ function ThoughtPageContent() {
         </Button>
       </div>
 
-      {!currentThought && (
-        <Card className="mb-8 bg-linear-to-l from-blue-100 to-blue-50 ">
-          <CardContent className="p-6 text-center ">
-            <Lightbulb className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No Thought for Today
-            </h3>
-            <p className="text-gray-500 mb-4">
-              Add an inspirational thought for students today!
-            </p>
-            <Button
-              onClick={handleOpenModal}
-              className="bg-blue-500 hover:bg-blue-700 text-white hover:scale-103 transition-all duration-200"
-            >
-              Add Thought
-            </Button>
+      {isLoading ? (
+        <Card className="mb-8 bg-linear-to-l from-blue-100 to-blue-50">
+          <CardContent className="p-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+              <div className="h-24 bg-gray-200 rounded"></div>
+            </div>
           </CardContent>
         </Card>
-      )}
-
-      {currentThought && (
+      ) : currentThought ? (
         <Card className="mb-8 bg-linear-to-r from-blue-50 to-indigo-50 hover:scale-103 transition-all duration-200 ">          
         <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4">
@@ -252,6 +248,24 @@ function ThoughtPageContent() {
                         <Trash2 className="h-6 w-6" />
                       </button>
             </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="mb-8 bg-linear-to-l from-blue-100 to-blue-50 ">
+          <CardContent className="p-6 text-center ">
+            <Lightbulb className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No Thought for Today
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Add an inspirational thought for students today!
+            </p>
+            <Button
+              onClick={handleOpenModal}
+              className="bg-blue-500 hover:bg-blue-700 text-white hover:scale-103 transition-all duration-200"
+            >
+              Add Thought
+            </Button>
           </CardContent>
         </Card>
       )}
